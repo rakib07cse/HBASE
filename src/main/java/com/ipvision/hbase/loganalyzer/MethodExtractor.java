@@ -5,14 +5,12 @@
  */
 package com.ipvision.hbase.loganalyzer;
 
+import com.ipvision.hbase.db.HBaseInserter;
 import com.ipvision.hbase.utils.Common;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.logging.Level;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -21,27 +19,26 @@ import java.util.logging.Logger;
  */
 public class MethodExtractor {
 
-    private FileReader fileReader = null;
-    private BufferedReader bufferedReader = null;
-    private String currentLine = null;
+    private static final Logger methodExtractorLogger = Logger.getLogger(MethodExtractor.class.getName());
 
     public void processFile(File file) throws Exception {
 
+        methodExtractorLogger.entering(getClass().getName(), "entering processFile method");
+        String currentLine = null;
+
         MethodParser methodPaser = new MethodParser();
         MethodBean methodBean = new MethodBean();
-        //MethodExtractorManager methodExtractorManager = new MethodExtractorManager();
         CheckSumProcessValuePair checkSumProcessValuePair = new CheckSumProcessValuePair();
-        ArrayList<MethodBean> methodBeanList = new ArrayList<>();
 
+        List<MethodBean> methodBeanList = new ArrayList<>();
         RandomAccessFile randomAccessFile = new RandomAccessFile(file, "rw");
-
         String md5CheckSum = Common.calculateCheckSum(file.getAbsolutePath());
+        String mapKey = file.getName();
 
-        String key = file.getName();
-        System.out.println(key);
-        if (MethodExtractorManager.getProcessedLogMap().containsKey(key)) {
+        if (MethodExtractorManager.getProcessedLogMap()
+                .containsKey(mapKey)) {
 
-            randomAccessFile.seek(MethodExtractorManager.getProcessedLogMap().get(key).getProcessByte());
+            randomAccessFile.seek(MethodExtractorManager.getProcessedLogMap().get(mapKey).getProcessByte());
         }
 
         while ((currentLine = randomAccessFile.readLine()) != null) {
@@ -49,36 +46,16 @@ public class MethodExtractor {
             methodBeanList.add(methodBean);
 
         }
-        checkSumProcessValuePair.setCheckSum(md5CheckSum);
-        checkSumProcessValuePair.setProcessByte(randomAccessFile.getFilePointer());
-        MethodExtractorManager.getProcessedLogMap().put(key, checkSumProcessValuePair);
-        
-        //HBaseManager.getHBaseManager().createHBaseTable("emp");
-        System.out.println("Table create successfully");
 
-        //fileReader = new FileReader(file);
-        //bufferedReader = new BufferedReader(fileReader);
-//        try {
-//            while ((currentLine = bufferedReader.readLine()) != null) {
-//
-//                methodBean = methodPaser.parseMethod(currentLine);
-//                methodBeanList.add(methodBean);
-//
-//            }
-//        } catch (IOException ex) {
-//            Logger.getLogger(MethodExtractor.class.getName()).log(Level.SEVERE, null, ex);
-//        } finally {
-//            try {
-//                if (bufferedReader != null) {
-//                    bufferedReader.close();
-//                }
-//                if (fileReader != null) {
-//                    fileReader.close();
-//                }
-//            } catch (IOException ex) {
-//                ex.printStackTrace();
-//            }
-//        }
+        HBaseInserter.addMethod(methodBeanList);
+
+        checkSumProcessValuePair.setCheckSum(md5CheckSum);
+
+        checkSumProcessValuePair.setProcessByte(randomAccessFile.getFilePointer());
+        MethodExtractorManager.getProcessedLogMap()
+                .put(mapKey, checkSumProcessValuePair);
+
+        methodExtractorLogger.exiting(getClass().getName(), "Exiting processFile method");
     }
 
 }

@@ -13,4 +13,5 @@ public class Tools {
     
     public static final String LOG_DIR_KEY = "logdir";
     public static final String PROCESSED_LOG_MAP = "processedlogmap";
+    public static final String HBASE_INSERT_TABLE_NAME = "methodData";
 }

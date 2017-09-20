@@ -5,38 +5,50 @@
  */
 package com.ipvision.hbase.loganalyzer;
 
+import java.io.Serializable;
+
 /**
  *
  * @author rakib
  */
-public class MethodBean {
+public class MethodBean implements Serializable {
 
     private String timestamp;
     private String methodName;
+    private String data;
 
     public MethodBean() {
 
     }
 
-    public MethodBean(String timestamp, String methodName) {
+    public MethodBean(String timestamp, String methodName, String data) {
         this.timestamp = timestamp;
         this.methodName = methodName;
+        this.data = data;
     }
-    
-    public void setTimestamp(String timestamp){
+
+    public void setTimestamp(String timestamp) {
         this.timestamp = timestamp;
     }
-    
-    public String getTimeString(){
+
+    public String getTimestamp() {
         return timestamp;
     }
-    
-    public void setMethodName(String methodName){
+
+    public void setMethodName(String methodName) {
         this.methodName = methodName;
     }
-    
-    public String getMethodName(){
+
+    public String getMethodName() {
         return methodName;
+    }
+
+    public void setData(String data) {
+        this.data = data;
+    }
+
+    public String getData() {
+        return this.data;
     }
 
 }

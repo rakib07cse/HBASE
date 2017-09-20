@@ -33,7 +33,7 @@ public class MethodExtractorManager {
 
     private String processingLogDirectory;
     private String processedLogMapFile;
-    private  ArrayList<File> files = new ArrayList<>();
+    private ArrayList<File> files = new ArrayList<>();
     private final Pattern directoryPattern = Pattern.compile("[\\d]{4}-[\\d]{2}");
 
     private static HashMap<String, CheckSumProcessValuePair<String, Long>> processedLogMap;
@@ -48,7 +48,7 @@ public class MethodExtractorManager {
         MethodExtractor methodExtractor = new MethodExtractor();
 
         File processingLogDir = new File(this.processingLogDirectory);
-        Collection<File> files = getLogFiles(processingLogDir);
+        addLogFiles(processingLogDir);
         for (File file : files) {
             System.out.println(file);
             methodExtractor.processFile(file);
@@ -59,9 +59,9 @@ public class MethodExtractorManager {
             out.writeObject(processedLogMap);
             out.flush();
         }
-        
+
         processedLogMap.keySet().stream().forEach((key) -> {
-            System.out.println(key + " "+processedLogMap.get(key).getCheckSum()+ " "+processedLogMap.get(key).getProcessByte() );
+            System.out.println(key + " " + processedLogMap.get(key).getCheckSum() + " " + processedLogMap.get(key).getProcessByte());
         });
 
     }
@@ -140,44 +140,26 @@ public class MethodExtractorManager {
         });
     }
 
-    private Collection<File> getLogFiles(File processingLogDir) throws Exception {
-
-        CheckSumProcessValuePair checkSumProcessValuePair = new CheckSumProcessValuePair();
-
+    private void addLogFiles(File processingLogDir) throws Exception {
+        String md5Checksum = null;
+        String mapKey = null;
+        
         for (File file : processingLogDir.listFiles()) {
-
             if (file.isDirectory()) {
-                getLogFiles(file);
+                addLogFiles(file);
             }
             if (file.isFile()) {
-                RandomAccessFile randomAccessFile = new RandomAccessFile(file.getAbsolutePath(), "rw");
-                String mapKey = file.getName();
-                long fileReadPointer = randomAccessFile.getFilePointer();
-                String md5Checksum = Common.calculateCheckSum(file.getAbsolutePath());
-
-                checkSumProcessValuePair.setCheckSum(md5Checksum);
-                checkSumProcessValuePair.setProcessByte(processedLogMap);
-
-                        
-                HBaseManager.getHBaseManager().createHBaseTable("emp1");
+                mapKey = file.getName();
+                md5Checksum = Common.calculateCheckSum(file.getAbsolutePath());
                 if (!processedLogMap.containsKey(mapKey)) {
-                  //  System.out.println("Checksum: " + md5Checksum);
-                    //processedLogMap.put(mapKey, checkSumProcessValuePair);
                     files.add(file);
-                } else {
-
-                    String checkSum = processedLogMap.get(mapKey).getCheckSum();
-                    System.out.println("checksum:"+checkSum);
-                    if (md5Checksum == null ? checkSum != null : !md5Checksum.equals(checkSum)) {
-                        files.add(file);
-                    }
+                } else if (!md5Checksum.equals(processedLogMap.get(mapKey).getCheckSum())) {
+                    files.add(file);
                 }
-
             }
 
         }
-        
-        return files;
+
     }
 
     public static HashMap<String, CheckSumProcessValuePair<String, Long>> getProcessedLogMap() {
