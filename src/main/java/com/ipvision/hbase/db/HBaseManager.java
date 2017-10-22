@@ -5,6 +5,7 @@
  */
 package com.ipvision.hbase.db;
 
+import com.ipvision.hbase.utils.Tools;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -42,15 +43,13 @@ import org.slf4j.LoggerFactory;
  */
 public class HBaseManager {
 
-    private static Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+    private static final Logger logger = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
 
     private final static String ZK_QUORUM = "localhost";
     private final static int ZK_CLIENT_PORT = 2181;
 
     private static Configuration hBaseConfig = null;
     private static HBaseAdmin hBaseAdmin = null;
-    
-    
 
     private static class HBaseManagerSingleton {
 
@@ -106,6 +105,9 @@ public class HBaseManager {
 
     /**
      * Create HBase Table instance
+     *
+     * @param tableName
+     * @throws java.io.IOException
      */
     public void createHBaseTable(String tableName) throws IOException {
 
@@ -113,16 +115,18 @@ public class HBaseManager {
         if (!hbaseAdmin.tableExists(tableName)) {
             //Instantiating table descriptor class
             HTableDescriptor tableDescriptor = new HTableDescriptor(tableName);
-
             //Adding Colume table families to table descriptor
-            tableDescriptor.addFamily(new HColumnDescriptor("personal"));
-            tableDescriptor.addFamily(new HColumnDescriptor("professional"));
+            tableDescriptor.addFamily(new HColumnDescriptor(Tools.HBASE_TABLE_METHOD_COLUME_FAMILY_NAME));
+            tableDescriptor.addFamily(new HColumnDescriptor(Tools.HBASE_TABLE_LIVESTREAMHISTORY_COLUME_FAMILY_NAME));
+            tableDescriptor.addFamily(new HColumnDescriptor(Tools.HBASE_TABLE_NOTINFO_COLUME_FAMILY_NAME));
 
             //Execute the table Through admin
             hBaseAdmin.createTable(tableDescriptor);
-            System.out.println("Table created");
+//            String msg = "Table '" + tableName + "' successfully created.";
+//            throw new IOException(msg);
         } else {
-            System.out.println("Table already exits");
+            String msg = "Table '" + tableName + "' table already exist.";
+            throw new IOException(msg);
         }
     }
 
@@ -151,6 +155,11 @@ public class HBaseManager {
 
     /**
      * create thread safe table from HConnection pool
+     *
+     * @param connection
+     * @param tableName
+     * @return
+     * @throws java.io.IOException
      */
     public HTableInterface getHTable(HConnection connection, String tableName) throws IOException {
         if (getAdmin().tableExists(tableName)) {
@@ -165,15 +174,17 @@ public class HBaseManager {
         }
         return connection.getTable(tableName);
     }
-    
+
     /**
      * Create Put Instance
+     *
+     * @param logid
+     * @return
      */
-      
-     public Put createLoggerPut(String logid){
-     
-         return new Put(Bytes.toBytes(logid));
-     }
+    public Put createLoggerPut(String logid) {
+
+        return new Put(Bytes.toBytes(logid));
+    }
 
     public long bulkDelete(String tableName, Map<String, String> columnMap, int batchSize) throws IOException {
 //        HConnection connection = createHConnection();
